@@ -1,0 +1,51 @@
+---
+title: 十字链表AOI
+date: 2022-01-18 17:40:20 +/-TTTT
+categories: [场景]
+tags: [十字链表,AOI]
+---
+
+##### 十字链表
+根据2d地图坐标系将其分成x轴和y轴两个双向链表，如果是3d地图，则需要多维护一条代表高度的双向链表。对象按照坐标值从小到大相应的排列在相应的坐标轴上面。
+ * ![crosslist.png](https://github.com/HahahaVal/HahahaVal.github.io/blob/main/_posts/src/%E5%8D%81%E5%AD%97%E9%93%BE%E8%A1%A8/crosslist.png?raw=true)
+
+* * *
+
+##### 数据结构
+ * 对象存储有左右两个视野边界点，例如对象坐标为(a, b)，用于让别的点判断它是否在其视野内，AOI半径为r，那么在X轴上会有两个哨兵left_x, right_x，坐标值分别为(a - r)和(a + r)，用来判断某个点是否在本点的视距内。
+ * 移动到正确的位置后，左右两个哨兵从对象前后位置出发，移动到正确的位置，并处理跨过其他对象时触发的进入和离开事件。
+ * ![enter.png](https://github.com/HahahaVal/HahahaVal.github.io/blob/main/_posts/src/%E5%8D%81%E5%AD%97%E9%93%BE%E8%A1%A8/sentry.png?raw=true)
+ * 判断是否在视野范围时，需要分别遍历x、y两轴，再求两轴的交集。
+ * aoi对象只存储entityId和aoi，位置数据，只做视野计算和回调通知，由业务层的对象entity保存兴趣列表和被关注列表。
+   * 兴趣列表：进入我AOI范围的实体，我感兴趣的对象集合。
+   * 被关注列表：我进入了谁的AOI范围，关注我的对象集合。
+
+* * *
+
+##### 对象进入
+新增的对象需要根据x坐标和y坐标，遍历对应的链表并找到合适的位置插入。
+ * ![enter.png](https://github.com/HahahaVal/HahahaVal.github.io/blob/main/_posts/src/%E5%8D%81%E5%AD%97%E9%93%BE%E8%A1%A8/enter.png?raw=true)
+
+* * *
+
+##### 对象移动
+对象移动后若只改变x坐标，则只调整x轴链表，若只改变y轴坐标，则只调整y轴链表。根据移动后的坐标找到合适的位置并调整链表节点指针的指向。
+ * ![move.png](https://github.com/HahahaVal/HahahaVal.github.io/blob/main/_posts/src/%E5%8D%81%E5%AD%97%E9%93%BE%E8%A1%A8/move.png?raw=true)
+
+* * *
+
+##### 对象离开
+对象离开则将链表中的对应节点断开即可。
+ * ![leave.png](https://github.com/HahahaVal/HahahaVal.github.io/blob/main/_posts/src/%E5%8D%81%E5%AD%97%E9%93%BE%E8%A1%A8/leave.png?raw=true)
+
+* * *
+
+##### 优化
+ * 每次新增对象，都需要遍历对应的链表找到对应的位置插入，使用跳跃表替换有序的单链表。
+ * 只用一条x轴链表，遍历x轴，判断每个实体是否在视野内更高效。
+ 
+* * *
+
+##### 应用场景
+ * 十字链表不适合对象频繁进出场景的情况。因为每次对象的进入都需要往x轴和y轴双向链表中找到合适的位置插入。
+ * 十字链表每次对象的小幅度移动，只需要关注x轴和y轴更精准的邻居是否在视野内，没有多余的运算。
